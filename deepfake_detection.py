@@ -6,7 +6,6 @@ from PIL import Image
 import tempfile
 import numpy as np
 
-# Initialize MTCNN for face detection
 mtcnn = MTCNN(keep_all=True, device='cpu')
 
 # Load InceptionResnetV1 pre-trained model for feature extraction (face embeddings)
@@ -17,7 +16,6 @@ def classify_face(face_tensor):
     with torch.no_grad():
         # Extract embeddings using InceptionResnetV1
         embedding = model(face_tensor)
-        # Placeholder classification (Replace with your trained classifier)
         return "Real" if torch.rand(1).item() > 0.5 else "Fake"
 
 # Detect faces and classify each face as real or fake
@@ -32,7 +30,7 @@ def detect_and_classify_faces(video_file):
         if not ret:
             break
         
-        # Convert the frame to RGB (OpenCV loads frames in BGR format)
+        # Convert the frame to RGB
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
         # Detect faces in the frame
@@ -40,9 +38,8 @@ def detect_and_classify_faces(video_file):
         
         if faces is not None:
             for i, face_tensor in enumerate(faces):
-                # If a face is detected, classify it
                 if face_tensor is not None:
-                    face_tensor = face_tensor.unsqueeze(0)  # Add batch dimension
+                    face_tensor = face_tensor.unsqueeze(0)
                     result = classify_face(face_tensor)
                     results.append(result)
                     st.write(f"Frame {frame_count + 1}: Face {i + 1} - Result: {result}")
@@ -51,7 +48,6 @@ def detect_and_classify_faces(video_file):
     
     cap.release()
     
-    # Final result (majority vote)
     fake_count = results.count("Fake")
     real_count = results.count("Real")
     
@@ -59,25 +55,20 @@ def detect_and_classify_faces(video_file):
         return "Deepfake Detected"
     else:
         return "Real Video"
-
-# Streamlit front-end for the deepfake detection engine
+    
 st.title("Deepfake Detection Engine")
 st.write("Upload a video to analyze for deepfakes.")
 
-# File uploader for video input
 uploaded_video = st.file_uploader("Choose a video file", type=["mp4", "avi", "mov"])
 
 if uploaded_video is not None:
-    # Save uploaded video to a temporary file
     temp_file = tempfile.NamedTemporaryFile(delete=False)
     temp_file.write(uploaded_video.read())
     
-    # Display the uploaded video
     st.video(uploaded_video)
     
     # Run the detection and classification
     st.write("Analyzing the video...")
     detection_result = detect_and_classify_faces(temp_file.name)
     
-    # Display the final result
     st.write(f"Final Result: {detection_result}")
